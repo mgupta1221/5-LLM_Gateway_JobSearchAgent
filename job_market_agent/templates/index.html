@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>India Job Market Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #07071a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Gradient text ── */
+    .g-text {
+      background: linear-gradient(135deg, #818cf8, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Glass card ── */
+    .glass {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ── Animated gradient border on focus ── */
+    .g-border:focus-within {
+      border-image: linear-gradient(135deg,#6366f1,#a855f7) 1;
+    }
+
+    /* ── Status feed entry animation ── */
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .feed-item { animation: slideUp .25s ease forwards; }
+
+    /* ── Skill bar ── */
+    @keyframes growBar {
+      from { width: 0; }
+    }
+    .skill-bar { animation: growBar .8s ease forwards; }
+
+    /* ── Pulse dot ── */
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(.8); }
+    }
+    .pulse { animation: pulse 1.4s infinite; }
+
+    /* ── Glow button ── */
+    .btn-glow {
+      background: linear-gradient(135deg,#6366f1,#8b5cf6);
+      box-shadow: 0 0 20px rgba(99,102,241,.4);
+      transition: box-shadow .2s, transform .1s;
+    }
+    .btn-glow:hover { box-shadow:0 0 30px rgba(139,92,246,.6); transform:translateY(-1px); }
+    .btn-glow:active { transform:translateY(0); }
+    .btn-glow:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    /* ── Custom scrollbar ── */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:rgba(255,255,255,.03); }
+    ::-webkit-scrollbar-thumb { background:rgba(99,102,241,.4); border-radius:2px; }
+
+    /* ── Select / input base ── */
+    select, input[type=text], input[type=number] {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      color: #e2e8f0;
+      border-radius: .5rem;
+      padding: .6rem 1rem;
+      width: 100%;
+      outline: none;
+      transition: border-color .2s;
+    }
+    select:focus, input:focus { border-color:#6366f1; }
+    select option { background:#1e1e38; color:#e2e8f0; }
+
+    /* ── Provider badge colours ── */
+    .badge-groq      { background:rgba(16,185,129,.15); color:#34d399; }
+    .badge-gemini    { background:rgba(99,102,241,.15);  color:#818cf8; }
+    .badge-cerebras  { background:rgba(245,158,11,.15);  color:#fbbf24; }
+    .badge-openrouter{ background:rgba(236,72,153,.15);  color:#f472b6; }
+    .badge-github    { background:rgba(148,163,184,.15); color:#94a3b8; }
+    .badge-default   { background:rgba(148,163,184,.15); color:#94a3b8; }
+
+    /* ── Confidence badge ── */
+    .conf-high   { background:rgba(16,185,129,.15); color:#34d399; }
+    .conf-medium { background:rgba(245,158,11,.15);  color:#fbbf24; }
+    .conf-low    { background:rgba(239,68,68,.15);   color:#f87171; }
+
+    /* ── Hero gradient blob ── */
+    .blob {
+      position:absolute; border-radius:50%; filter:blur(80px); opacity:.12;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Background blobs ── -->
+<div class="blob w-96 h-96 bg-indigo-600 top-0 left-0"></div>
+<div class="blob w-72 h-72 bg-violet-600 top-40 right-20"></div>
+<div class="blob w-64 h-64 bg-pink-600 bottom-20 left-1/3"></div>
+
+<!-- ══════════════════════ HEADER ══════════════════════ -->
+<header class="relative z-10 border-b border-white/5 py-4 px-6">
+  <div class="max-w-6xl mx-auto flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold g-text">🇮🇳 India Job Market Intelligence</h1>
+      <p class="text-xs text-slate-500 mt-0.5">
+        Multi-LLM Agent &nbsp;·&nbsp; Live Analysis &nbsp;·&nbsp; Powered by llm_gatewayV2
+      </p>
+    </div>
+    <div id="sysStatus" class="flex items-center gap-2 text-xs text-slate-400">
+      <span class="w-2 h-2 rounded-full bg-yellow-400 pulse"></span>
+      <span>Connecting...</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════════════ MAIN ══════════════════════ -->
+<main class="relative z-10 max-w-6xl mx-auto px-6 py-8 space-y-8">
+
+  <!-- ── Hero ── -->
+  <div class="text-center space-y-2 pb-2">
+    <h2 class="text-3xl font-bold">Find Your Market Rate in India</h2>
+    <p class="text-slate-400 text-sm max-w-lg mx-auto">
+      Enter a role and city. The AI agent queries live job boards, extracts salary benchmarks,
+      and delivers a data-driven market report — all in real time.
+    </p>
+  </div>
+
+  <!-- ── Query form ── -->
+  <div class="glass rounded-2xl p-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+
+      <div class="md:col-span-5">
+        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Job Role</label>
+        <input id="roleInput" type="text"
+               placeholder="e.g. Python Backend Engineer"
+               value="Python Backend Engineer" />
+      </div>
+
+      <div class="md:col-span-4">
+        <label class="block text-xs text-slate-400 mb-1.5 font-medium">City</label>
+        <select id="cityInput">
+          <option value="Bangalore">Bangalore</option>
+          <option value="Mumbai">Mumbai</option>
+          <option value="Hyderabad">Hyderabad</option>
+          <option value="Pune">Pune</option>
+          <option value="Delhi">Delhi</option>
+          <option value="Chennai">Chennai</option>
+          <option value="Noida">Noida</option>
+          <option value="Gurgaon">Gurgaon</option>
+          <option value="Kolkata">Kolkata</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-3">
+        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Experience</label>
+        <select id="expInput">
+          <option value="1">1 year</option>
+          <option value="2">2 years</option>
+          <option value="3" selected>3 years</option>
+          <option value="4">4 years</option>
+          <option value="5">5 years</option>
+          <option value="7">7 years</option>
+          <option value="10">10 years</option>
+          <option value="15">15 years</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-5 flex items-center gap-4">
+      <button id="analyzeBtn" onclick="startAnalysis()"
+              class="btn-glow px-7 py-2.5 rounded-xl font-semibold text-white flex items-center gap-2">
+        <span id="btnIcon">🔍</span>
+        <span id="btnText">Analyze Market</span>
+      </button>
+      <button id="validateBtn" onclick="validatePrompt()"
+              class="px-5 py-2.5 rounded-xl font-semibold text-slate-300 flex items-center gap-2"
+              style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);transition:all .2s"
+              onmouseenter="this.style.borderColor='#6366f1'" onmouseleave="this.style.borderColor='rgba(255,255,255,.1)'">
+        <span id="valIcon">📋</span>
+        <span id="valText">Validate Prompt</span>
+      </button>
+      <p class="text-xs text-slate-500 hidden md:block">
+        Adzuna India &nbsp;+&nbsp; Tavily &nbsp;→&nbsp; Multi-LLM with auto-failover
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Prompt Validation Results (hidden until triggered) ── -->
+  <div id="validationSection" class="hidden">
+    <div class="glass rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-white flex items-center gap-2">
+          <span>📋</span> Prompt Evaluation — 8-Criteria Rubric
+        </h3>
+        <button onclick="document.getElementById('validationSection').classList.add('hidden')"
+                class="text-slate-500 hover:text-slate-300 text-sm">✕ Close</button>
+      </div>
+      <div id="validationBody">
+        <p class="text-slate-400 text-sm">Running evaluation...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Analysis section (hidden until started) ── -->
+  <div id="analysisSection" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Left: Live Agent Feed -->
+    <div class="glass rounded-2xl p-6 flex flex-col">
+      <div class="flex items-center gap-2 mb-4">
+        <span id="feedDot" class="w-2.5 h-2.5 rounded-full bg-indigo-500 pulse"></span>
+        <h3 class="font-semibold text-white text-sm">Live Agent Activity</h3>
+      </div>
+      <div id="statusFeed"
+           class="flex-1 space-y-2 overflow-y-auto max-h-[520px] pr-1">
+        <!-- events appended here -->
+      </div>
+    </div>
+
+    <!-- Right: Results -->
+    <div id="resultsPanel" class="space-y-4">
+      <div class="glass rounded-2xl p-8 text-center text-slate-400">
+        <div class="text-5xl mb-3">⏳</div>
+        <p class="font-medium text-slate-300">Waiting for agent...</p>
+        <p class="text-sm mt-1">Follow the live activity feed on the left</p>
+      </div>
+    </div>
+
+  </div><!-- /analysisSection -->
+
+</main>
+
+<!-- ══════════════════════ SCRIPTS ══════════════════════ -->
+<script>
+// ── Globals ──────────────────────────────────────────────────────
+let evtSource = null;
+
+// ── System health check ──────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch('/health');
+    const d = await r.json();
+    const el = document.getElementById('sysStatus');
+    if (d.status === 'ok' && d.gateway === 'up') {
+      el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>All systems ready</span>`;
+    } else if (d.status === 'ok') {
+      el.innerHTML = `<span class="w-2 h-2 rounded-full bg-yellow-400 pulse"></span><span>Gateway starting...</span>`;
+      setTimeout(checkHealth, 2000);
+    }
+  } catch(e) { setTimeout(checkHealth, 3000); }
+}
+checkHealth();
+
+// ── Start analysis ───────────────────────────────────────────────
+async function startAnalysis() {
+  const role  = document.getElementById('roleInput').value.trim();
+  const city  = document.getElementById('cityInput').value;
+  const years = parseInt(document.getElementById('expInput').value);
+  if (!role) { alert('Please enter a job role.'); return; }
+
+  // Reset UI
+  document.getElementById('analysisSection').classList.remove('hidden');
+  document.getElementById('analysisSection').style.display = 'grid';
+  document.getElementById('statusFeed').innerHTML = '';
+  document.getElementById('feedDot').className = 'w-2.5 h-2.5 rounded-full bg-indigo-500 pulse';
+  document.getElementById('resultsPanel').innerHTML = `
+    <div class="glass rounded-2xl p-8 text-center text-slate-400">
+      <div class="text-5xl mb-3 animate-spin" style="display:inline-block">⚙️</div>
+      <p class="font-medium text-slate-300 mt-2">Agent is working...</p>
+      <p class="text-sm mt-1">Follow the live feed on the left</p>
+    </div>`;
+
+  // Disable button
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  document.getElementById('btnIcon').textContent = '⏳';
+  document.getElementById('btnText').textContent = 'Analyzing...';
+
+  // Post request
+  const res  = await fetch('/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role, city, experience_years: years }),
+  });
+  const { job_id } = await res.json();
+
+  // Open SSE stream
+  if (evtSource) evtSource.close();
+  evtSource = new EventSource(`/stream/${job_id}`);
+  evtSource.onmessage = e => handleEvent(JSON.parse(e.data));
+  evtSource.onerror   = () => { addFeedItem('❌','Connection lost','error',{}); resetBtn(); };
+}
+
+// ── Handle incoming SSE event ─────────────────────────────────────
+function handleEvent(ev) {
+  if (ev.type === 'ping') return;
+  addFeedItem(ev.icon || '·', ev.message, ev.type, ev);
+  if (ev.type === 'done')  { renderResults(ev.result); resetBtn(); evtSource.close(); }
+  if (ev.type === 'error') { renderError(ev.message);  resetBtn(); evtSource.close(); }
+}
+
+// ── Feed item ─────────────────────────────────────────────────────
+const TYPE_STYLE = {
+  llm_thinking : 'border-l-violet-500  bg-violet-500/5',
+  tool_call    : 'border-l-amber-500   bg-amber-500/5',
+  tool_result  : 'border-l-emerald-500 bg-emerald-500/5',
+  failover     : 'border-l-rose-400    bg-rose-500/5',
+  provider     : 'border-l-blue-400    bg-blue-500/5',
+  verdict      : 'border-l-teal-400    bg-teal-500/5',
+  status       : 'border-l-indigo-400  bg-indigo-500/5',
+  done         : 'border-l-emerald-400 bg-emerald-500/8',
+  error        : 'border-l-red-500     bg-red-500/5',
+};
+
+function providerBadge(p) {
+  const cls = `badge-${(p||'').toLowerCase()}` in TYPE_STYLE
+    ? `badge-${(p||'').toLowerCase()}`
+    : 'badge-default';
+  // just use inline style for simplicity
+  const map = {
+    anthropic:  '#f9a8d4,rgba(244,114,182,.15)',
+    groq:       '#34d399,rgba(16,185,129,.15)',
+    gemini:     '#818cf8,rgba(99,102,241,.15)',
+    cerebras:   '#fbbf24,rgba(245,158,11,.15)',
+    openrouter: '#f472b6,rgba(236,72,153,.15)',
+    github:     '#94a3b8,rgba(148,163,184,.15)',
+  };
+  const [fg,bg] = (map[(p||'').toLowerCase()] || '#94a3b8,rgba(148,163,184,.15)').split(',');
+  return `<span style="color:${fg};background:${bg};padding:1px 8px;border-radius:9999px;font-size:11px;margin-left:6px">${p}</span>`;
+}
+
+function addFeedItem(icon, msg, type, ev) {
+  const feed = document.getElementById('statusFeed');
+  const style = TYPE_STYLE[type] || 'border-l-slate-500 bg-slate-500/5';
+  const div = document.createElement('div');
+  div.className = `feed-item border-l-2 rounded-lg p-3 ${style}`;
+
+  let extra = '';
+  if (type === 'provider' && ev.provider) {
+    extra = providerBadge(ev.provider);
+    if (ev.model) extra += `<span style="color:#94a3b8;background:rgba(148,163,184,.1);padding:1px 8px;border-radius:6px;font-size:11px;font-family:monospace;margin-left:4px">${ev.model}</span>`;
+    if (ev.latency_ms) extra += `<span style="font-size:11px;color:#64748b;margin-left:6px">${ev.latency_ms}ms</span>`;
+  }
+  if (type === 'failover')                 extra = `<span style="color:#f87171;background:rgba(239,68,68,.15);padding:1px 8px;border-radius:9999px;font-size:11px;margin-left:6px">FAILOVER</span>`;
+  if (type === 'verdict' && ev.confidence) extra = `<span class="conf-${ev.confidence}" style="padding:1px 8px;border-radius:9999px;font-size:11px;margin-left:6px">${(ev.confidence||'').toUpperCase()}</span>`;
+
+  div.innerHTML = `
+    <div class="flex items-start gap-2">
+      <span class="text-base mt-0.5 flex-shrink-0">${icon}</span>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm text-slate-200 leading-snug">${msg}${extra}</p>
+        <p class="text-xs text-slate-600 mt-0.5">${new Date().toLocaleTimeString()}</p>
+        ${ev.preview ? `<p class="text-xs text-slate-500 mt-1 font-mono truncate">${ev.preview}</p>` : ''}
+      </div>
+    </div>`;
+  feed.appendChild(div);
+  feed.scrollTop = feed.scrollHeight;
+}
+
+// ── Render final results ─────────────────────────────────────────
+function renderResults(result) {
+  if (!result) { renderError('No result returned'); return; }
+
+  const verdict   = result.verdict      || {};
+  const answer    = result.final_answer || {};
+  const trace     = result.trace_summary|| {};
+
+  const median    = verdict.final_median_lpa   || answer.median_salary_lpa || 0;
+
+  // salary_range_lpa may use min/max, min_lpa/max_lpa, or other keys
+  function _range(o) {
+    if (!o || typeof o !== 'object') return null;
+    const mn = o.min ?? o.min_lpa ?? o.low ?? undefined;
+    const mx = o.max ?? o.max_lpa ?? o.high ?? undefined;
+    return (mn !== undefined && mx !== undefined) ? {min:mn, max:mx} : null;
+  }
+  const range = _range(verdict.salary_range_lpa) || _range(answer.salary_range) || {min:0, max:0};
+
+  const skills    = answer.top_skills          || [];
+  const companies = verdict.top_companies      || (answer.top_companies||[]).map(c=>typeof c==='object'?c.name:c);
+  const conf      = verdict.data_confidence    || answer.data_confidence   || 'low';
+  const rec       = verdict.recommendation     || answer.recommendation    || '';
+  const passed    = verdict.passed;
+
+  // Stop pulsing dot
+  document.getElementById('feedDot').className = 'w-2.5 h-2.5 rounded-full ' + (passed ? 'bg-emerald-400' : 'bg-yellow-400');
+
+  // Skill bars
+  const skillsHtml = skills.slice(0,7).map((s,i) => {
+    const skill = typeof s === 'object' ? s : {skill:s, demand_count:'', demand_pct: Math.max(15, 95-i*13)};
+    return `
+      <div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-slate-300 font-medium">${skill.skill}</span>
+          <span class="text-slate-500">${skill.demand_count ? skill.demand_count+' listings' : skill.demand_pct+'%'}</span>
+        </div>
+        <div class="h-1.5 rounded-full overflow-hidden" style="background:rgba(255,255,255,.06)">
+          <div class="skill-bar h-full rounded-full"
+               style="background:linear-gradient(90deg,#6366f1,#a78bfa);width:${skill.demand_pct||Math.max(15,95-i*13)}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Company tags
+  const coHtml = companies.slice(0,5).map(c =>
+    `<span class="px-3 py-1.5 rounded-lg text-sm text-slate-300" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)">${c}</span>`
+  ).join('');
+
+  // Confidence colour
+  const confCls = {high:'conf-high',medium:'conf-medium',low:'conf-low'}[conf]||'conf-low';
+
+  // Salary position % on the bar
+  const barPct = (range.max > range.min && median)
+    ? Math.min(97, Math.max(3, ((median - range.min) / (range.max - range.min)) * 100))
+    : 50;
+
+  // Providers used
+  const providers = (trace.providers_used||[]).map(p=>providerBadge(p)).join('');
+
+  document.getElementById('resultsPanel').innerHTML = `
+
+    <!-- Salary card -->
+    <div class="glass rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-white">Market Rate</h3>
+        <span class="${confCls} px-2.5 py-1 rounded-full text-xs font-semibold">${conf.toUpperCase()} CONFIDENCE</span>
+      </div>
+
+      <div class="text-center py-3">
+        <p class="text-xs text-slate-500 mb-1 uppercase tracking-widest">Median Salary</p>
+        <p class="text-6xl font-bold g-text">₹${median}L</p>
+        <p class="text-sm text-slate-500 mt-1">per annum (LPA)</p>
+      </div>
+
+      <!-- Min / Med / Max row -->
+      <div class="grid grid-cols-3 gap-px mt-2 rounded-xl overflow-hidden" style="background:rgba(255,255,255,.06)">
+        ${[['MIN','text-slate-300',range.min],['MEDIAN','text-indigo-400',median],['MAX','text-slate-300',range.max]].map(([label,cls,val])=>`
+        <div class="py-3 text-center" style="background:rgba(7,7,26,.6)">
+          <p class="text-xs text-slate-500">${label}</p>
+          <p class="text-lg font-semibold ${cls}">₹${val}L</p>
+        </div>`).join('')}
+      </div>
+
+      <!-- Salary range bar -->
+      <div class="mt-4 relative h-2 rounded-full overflow-hidden" style="background:rgba(255,255,255,.06)">
+        <div class="absolute inset-0 rounded-full" style="background:linear-gradient(90deg,#6366f1,#8b5cf6,#ec4899)"></div>
+        <div class="absolute top-0 bottom-0 w-0.5 bg-white rounded-full shadow-lg" style="left:${barPct}%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-slate-600 mt-1">
+        <span>₹${range.min}L</span><span>₹${range.max}L</span>
+      </div>
+    </div>
+
+    <!-- Skills card -->
+    ${skillsHtml ? `
+    <div class="glass rounded-2xl p-6">
+      <h3 class="font-semibold text-white mb-4">Top Required Skills</h3>
+      <div class="space-y-3">${skillsHtml}</div>
+    </div>` : ''}
+
+    <!-- Companies + Recommendation -->
+    <div class="glass rounded-2xl p-6">
+      <h3 class="font-semibold text-white mb-3">Top Hiring Companies</h3>
+      <div class="flex flex-wrap gap-2">
+        ${coHtml || '<p class="text-slate-500 text-sm">No company data available</p>'}
+      </div>
+      ${rec ? `
+      <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,.06)">
+        <p class="text-xs text-slate-500 uppercase tracking-widest mb-1.5">Agent Recommendation</p>
+        <p class="text-sm text-slate-300 leading-relaxed">${rec}</p>
+      </div>` : ''}
+    </div>
+
+    <!-- Trace summary -->
+    <div class="glass rounded-2xl p-5">
+      <h3 class="font-semibold text-white mb-3 text-sm">Analysis Trace</h3>
+      <div class="grid grid-cols-3 gap-2 text-center mb-3">
+        ${[
+          ['LLM Turns',  trace.llm_turns ||0, '#818cf8'],
+          ['Tool Calls', trace.tool_calls||0, '#a78bfa'],
+          ['Time',       (trace.wall_clock_s||0)+'s', '#f472b6'],
+        ].map(([label,val,color])=>`
+        <div class="py-2 rounded-lg" style="background:rgba(255,255,255,.04)">
+          <p class="text-xl font-bold" style="color:${color}">${val}</p>
+          <p class="text-xs text-slate-500 mt-0.5">${label}</p>
+        </div>`).join('')}
+      </div>
+      ${providers ? `<div class="flex flex-wrap gap-1.5 items-center"><span class="text-xs text-slate-500 mr-1">Providers:</span>${providers}</div>` : ''}
+    </div>`;
+}
+
+// ── Error state ───────────────────────────────────────────────────
+function renderError(msg) {
+  document.getElementById('resultsPanel').innerHTML = `
+    <div class="glass rounded-2xl p-8 text-center" style="border:1px solid rgba(239,68,68,.2)">
+      <div class="text-5xl mb-3">❌</div>
+      <p class="font-medium text-red-400">Analysis Failed</p>
+      <p class="text-sm text-slate-400 mt-2">${msg}</p>
+      <p class="text-xs text-slate-500 mt-3">Check your API keys in .env and ensure the gateway is running.</p>
+    </div>`;
+}
+
+// ── Validate Prompt ──────────────────────────────────────────────
+async function validatePrompt() {
+  const btn = document.getElementById('validateBtn');
+  btn.disabled = true;
+  document.getElementById('valIcon').textContent = '⏳';
+  document.getElementById('valText').textContent = 'Validating...';
+
+  const section = document.getElementById('validationSection');
+  section.classList.remove('hidden');
+  document.getElementById('validationBody').innerHTML = `
+    <div class="flex items-center gap-3 py-4">
+      <div class="animate-spin text-2xl" style="display:inline-block">⚙️</div>
+      <p class="text-slate-400 text-sm">Sending SYSTEM_PROMPT to LLM for rubric evaluation...</p>
+    </div>`;
+
+  try {
+    const r = await fetch('/validate-prompt', { method: 'POST' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    const data = await r.json();
+    renderValidation(data);
+  } catch (e) {
+    document.getElementById('validationBody').innerHTML = `
+      <div class="text-center py-4">
+        <p class="text-red-400 font-medium">Validation failed</p>
+        <p class="text-sm text-slate-500 mt-1">${e.message}</p>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    document.getElementById('valIcon').textContent = '📋';
+    document.getElementById('valText').textContent = 'Validate Prompt';
+  }
+}
+
+function renderValidation(data) {
+  const result = data.result || {};
+  const provider = data.provider || '?';
+  const model = data.model || '?';
+
+  const criteria = [
+    ['explicit_reasoning',      'Explicit Reasoning',      'Step-by-step reasoning before every action'],
+    ['structured_output',       'Structured Output',       'Strict machine-parseable output format'],
+    ['tool_separation',         'Tool Separation',         'Clear separation of tool calls vs reasoning'],
+    ['conversation_loop',       'Conversation Loop',       'Multi-turn conversation flow (2+ turns)'],
+    ['instructional_framing',   'Instructional Framing',   'Complete worked example with I/O'],
+    ['internal_self_checks',    'Internal Self-Checks',    'Numbered validation checks with PASS/FAIL'],
+    ['reasoning_type_awareness','Reasoning Type Awareness','Labeled reasoning steps ([LOOKUP], etc.)'],
+    ['fallbacks',               'Fallbacks',               'FAILURE → ACTION recovery pairs'],
+  ];
+
+  const allPassed = criteria.every(([key]) => result[key] === true);
+  const passCount = criteria.filter(([key]) => result[key] === true).length;
+
+  const rows = criteria.map(([key, label, desc]) => {
+    const passed = result[key] === true;
+    const icon = passed ? '✅' : '❌';
+    const cls  = passed ? 'text-emerald-400' : 'text-red-400';
+    return `
+      <div class="flex items-center gap-3 py-2.5 px-3 rounded-lg" style="background:rgba(255,255,255,.02)">
+        <span class="text-lg flex-shrink-0">${icon}</span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium ${cls}">${label}</p>
+          <p class="text-xs text-slate-500">${desc}</p>
+        </div>
+      </div>`;
+  }).join('');
+
+  const summaryColor = allPassed ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400' : 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400';
+  const summaryIcon  = allPassed ? '🎉' : '⚠️';
+  const summaryText  = allPassed ? 'All 8 criteria passed!' : `${passCount}/8 criteria passed`;
+
+  const clarity = result.overall_clarity || '';
+
+  document.getElementById('validationBody').innerHTML = `
+    <!-- Summary bar -->
+    <div class="flex items-center justify-between mb-4 p-3 rounded-xl border ${summaryColor}">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">${summaryIcon}</span>
+        <span class="font-semibold text-sm">${summaryText}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        ${providerBadge(provider)}
+        <span class="text-xs text-slate-500 font-mono">${model}</span>
+      </div>
+    </div>
+
+    <!-- Criteria grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+      ${rows}
+    </div>
+
+    ${clarity ? `
+    <div class="pt-3" style="border-top:1px solid rgba(255,255,255,.06)">
+      <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Overall Clarity</p>
+      <p class="text-sm text-slate-300 leading-relaxed">${clarity}</p>
+    </div>` : ''}`;
+}
+
+// ── Reset button ──────────────────────────────────────────────────
+function resetBtn() {
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = false;
+  document.getElementById('btnIcon').textContent = '🔍';
+  document.getElementById('btnText').textContent = 'Analyze Market';
+}
+</script>
+</body>
+</html>
