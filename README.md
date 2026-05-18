@@ -4,6 +4,10 @@ A multi-LLM AI agent that analyzes the Indian tech job market in real time. Ente
 
 Built on **llm_gatewayV2** (a FastAPI-based LLM router) with automatic provider failover, MCP tools, Pydantic models, and a web UI with live Server-Sent Events (SSE) streaming.
 
+## Demo Video
+
+[Watch the project demo](https://youtu.be/VOXoppJuwak)
+
 ## Project Structure
 
 ```
